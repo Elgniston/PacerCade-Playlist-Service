@@ -32,6 +32,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
+      res.status(500).json({ error: "Spotify credentials missing" });
+      return;
+    }
+
     const basicAuth = Buffer.from(
       `${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`
     ).toString("base64");
@@ -51,14 +56,19 @@ export default async function handler(req, res) {
 
     if (!tokenResponse.ok) {
       const errorBody = await tokenResponse.text();
-      res
-        .status(500)
-        .json({ error: "Failed to fetch token", details: errorBody });
+      res.status(500).json({
+        error: "Failed to fetch token",
+        details: errorBody,
+        redirect: SPOTIFY_REDIRECT_URI,
+      });
       return;
     }
 
     const tokenData = await tokenResponse.json();
-    res.status(200).json(tokenData);
+    res.status(200).json({
+      tokenData,
+      redirectUsed: SPOTIFY_REDIRECT_URI,
+    });
   } catch (err) {
     res
       .status(500)
