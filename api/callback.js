@@ -1,10 +1,18 @@
-import cookie from "cookie";
-
 const {
   SPOTIFY_CLIENT_ID,
   SPOTIFY_CLIENT_SECRET,
   SPOTIFY_REDIRECT_URI,
 } = process.env;
+
+function parseCookies(cookieHeader = "") {
+  return cookieHeader.split(";").reduce((acc, part) => {
+    const [key, value] = part.split("=").map((segment) => segment?.trim());
+    if (key) {
+      acc[key] = decodeURIComponent(value || "");
+    }
+    return acc;
+  }, {});
+}
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -13,7 +21,7 @@ export default async function handler(req, res) {
   }
 
   const { code, state } = req.query;
-  const cookies = cookie.parse(req.headers.cookie || "");
+  const cookies = parseCookies(req.headers.cookie || "");
   const storedState = cookies.spotify_auth_state;
 
   if (!state || state !== storedState) {
